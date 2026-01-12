@@ -1,0 +1,135 @@
+import api from "../../Axios";
+import { Link, useNavigate } from "react-router-dom";
+import { useState } from "react";
+
+function Signup() {
+  const [email, setEmail] = useState("");
+  const [password, setPass] = useState("");
+  const [confPass, setConfPass] = useState("");
+  const navigate = useNavigate();
+
+  // loading states
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  async function submit() {
+
+    if(password !== confPass) {
+      alert("Password do not match!");
+      return
+    };
+
+    setLoading(true);
+
+    try {
+
+      const res = await api.post("/pet/signup", { email, password });
+
+      navigate("/login");
+    } catch (error) {
+      setError("Sign up failed");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  if(loading) {
+    return <div className="min-h-screen flex items-center justify-center text-teal-600 font-bold text-xl">
+        signing in... 
+      </div>
+  }
+
+  if(error) {
+    return <p style={{ color: "red" }}>{error}</p>
+  }
+
+  return(
+    <div>
+      <div className="min-h-screen flex items-center justify-center bg-orange-50 p-4">
+      
+      {/* Main Card Container */}
+      <div className="w-full max-w-4xl bg-white rounded-3xl shadow-2xl overflow-hidden flex flex-col md:flex-row">
+        
+        {/* Left Side: Image & Branding */}
+        <div className="w-full md:w-1/2 bg-teal-600 p-10 flex flex-col justify-center items-center text-center relative">
+            {/* You can replace this src with a real pet image URL */}
+            <img 
+              src="https://images.unsplash.com/photo-1543466835-00a7907e9de1?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" 
+              alt="Cute Dog" 
+              className="rounded-full w-48 h-48 object-cover mb-6 border-4 border-white shadow-lg"
+            />
+            <h2 className="text-3xl font-bold text-white mb-2">Find Your Best Friend</h2>
+            <p className="text-teal-100">Join our community and swipe to find the pet that matches your vibe.</p>
+            
+            {/* Decorative Circles */}
+            <div className="absolute top-0 left-0 w-20 h-20 bg-teal-500 rounded-full -translate-x-10 -translate-y-10 opacity-50"></div>
+            <div className="absolute bottom-0 right-0 w-32 h-32 bg-teal-700 rounded-full translate-x-10 translate-y-10 opacity-50"></div>
+        </div>
+
+        {/* Right Side: The Form */}
+        <div className="w-full md:w-1/2 p-10 flex flex-col justify-center">
+          <div className="text-center md:text-left mb-8">
+            <h1 className="text-3xl font-extrabold text-gray-800">Create Account</h1>
+            <p className="text-gray-500 text-sm mt-2">Start your adoption journey today!</p>
+          </div>
+
+          <form className="flex flex-col gap-5">
+            
+            {/* Email Input */}
+            <div className="flex flex-col gap-1">
+              <label className="text-sm font-semibold text-gray-600 ml-1">Email Address</label>
+              <input 
+                type="email" 
+                placeholder="you@example.com" 
+                className="w-full bg-gray-50 border border-gray-200 text-gray-800 p-3 rounded-xl outline-none focus:border-teal-500 focus:ring-4 focus:ring-teal-100 transition-all"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
+            </div>
+
+            {/* Password Input */}
+            <div className="flex flex-col gap-1">
+              <label className="text-sm font-semibold text-gray-600 ml-1">Password</label>
+              <input 
+                type="password" 
+                placeholder="••••••••" 
+                className="w-full bg-gray-50 border border-gray-200 text-gray-800 p-3 rounded-xl outline-none focus:border-teal-500 focus:ring-4 focus:ring-teal-100 transition-all"
+                value={password}
+                onChange={(e) => setPass(e.target.value)}
+              />
+            </div>
+
+            {/* Confirm Password (Optional UI element) */}
+            <div className="flex flex-col gap-1">
+              <label className="text-sm font-semibold text-gray-600 ml-1">Confirm Password</label>
+              <input 
+                type="password" 
+                placeholder="••••••••" 
+                className="w-full bg-gray-50 border border-gray-200 text-gray-800 p-3 rounded-xl outline-none focus:border-teal-500 focus:ring-4 focus:ring-teal-100 transition-all"
+                value={confPass}
+                onChange={(e) => setConfPass(e.target.value)}
+              />
+            </div>
+
+            {/* Sign Up Button */}
+            <button className="mt-4 w-full bg-orange-500 text-white font-bold text-lg p-3 rounded-xl hover:bg-orange-600 transition-all shadow-lg shadow-orange-200 active:scale-[0.98]" onClick={submit}>
+              Join the Pack 🐾
+            </button>
+          </form>
+
+          {/* Login Link */}
+          <p className="text-center text-gray-500 text-sm mt-8">
+            Already have an account? 
+            <Link to="/login" className="text-teal-600 font-bold ml-1 hover:underline">
+              Log in here
+            </Link>
+          </p>
+
+        </div>
+      </div>
+    </div>
+    </div>
+  )
+}
+
+export default Signup
