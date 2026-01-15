@@ -1,21 +1,30 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import ConfirmationModal from "./ConfirmationModal";
+import { toast } from 'sonner';
+
 function Navi() {
   const navigate = useNavigate();
+
+  const [isOpen, setOpen] = useState(false);
 
   // loading states
   const [loading, setLoading] = useState(false);
 
   function handleLogout() {
-    let conf = confirm("Are you sure you want to logout?");
 
-    if(conf) {
       setLoading(true);
       localStorage.removeItem("token");
 
-      navigate("/login", {replace: true});
-    }
-    setLoading(false);
+      toast.success("Logging out", {
+        description: "Please wait"
+      })
+
+      setTimeout(() => {
+        navigate("/login", {replace: true});
+      }, 2000)
+
+      setLoading(false);
   }
 
   if(loading) {
@@ -64,15 +73,23 @@ function Navi() {
           {/* RIGHT: Logout Button */}
           <div>
             <button 
-              onClick={handleLogout}
+              onClick={() => setOpen(true)}
               className="bg-white text-teal-700 hover:bg-orange-100 hover:text-orange-600 font-bold py-2 px-6 rounded-full shadow-md transition-all transform active:scale-95"
             >
               Logout
             </button>
           </div>
-
         </div>
       </div>
+
+      <ConfirmationModal
+        open={isOpen}
+        close={() => setOpen(false)}
+        confirm={handleLogout}
+        title="Logout?"
+        subtitle="Don't forget your adoption"
+        confirmContent="Logout"
+      />
     </nav>
   )
 };

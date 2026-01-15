@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { toast } from 'sonner';
 import api from "../../Axios";
 import { Link, useNavigate } from "react-router-dom";
 function Login() {
@@ -14,7 +15,9 @@ function Login() {
     e.preventDefault();
 
     if(!email || !password) {
-      alert("Email or password cannot be empty");
+      toast.error('Login failed', {
+        description: "Email and Password cannot be empty",
+      });;
       return;
     }
 
@@ -26,7 +29,13 @@ function Login() {
 
       localStorage.setItem("token", res.data.token);
 
-      navigate("/swipe");
+      toast.success('Logged in', {
+        description: `Welcome ${email}`,
+      });
+
+      setTimeout(() => {
+        navigate("/swipe");
+      }, 3000)
     } catch (error) {
       console.log(error);
       setError(err.response?.data?.message || "Login failed")

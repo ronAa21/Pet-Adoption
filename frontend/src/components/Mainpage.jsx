@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import api from "../../Axios";
+import { toast } from 'sonner';
 
 function Mainpage() { 
   const [pets, setPets] = useState([]);
@@ -20,10 +21,14 @@ function Mainpage() {
 
     try {
       if(d === "heart") {
-        alert("Heart");
+        toast.success("Decision recorded", {
+          description: "Heart"
+        }); 
         const res = await api.post(`/pet/adopted/${id}`, { decision: 'like' });
       } else {
-        alert("Rejected")
+        toast.success("Decision recorded", {
+          description: "Rejected"
+        }); 
         const res = await api.post(`/pet/adopted/${id}`, {
         decision: 'pass' })
       }

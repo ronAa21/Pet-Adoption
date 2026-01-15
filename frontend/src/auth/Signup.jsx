@@ -1,6 +1,7 @@
 import api from "../../Axios";
 import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
+import { toast } from 'sonner';
 
 function Signup() {
   const [email, setEmail] = useState("");
@@ -15,7 +16,9 @@ function Signup() {
   async function submit() {
 
     if(password !== confPass) {
-      alert("Password do not match!");
+      toast.error('Signup failed', {
+        description: "Password do not match",
+      });
       return
     };
 
@@ -27,7 +30,9 @@ function Signup() {
 
       navigate("/login");
     } catch (error) {
-      setError("Sign up failed");
+        toast.error('Signup failed', {
+          description: error.message,
+        });
     } finally {
       setLoading(false);
     }
@@ -112,7 +117,9 @@ function Signup() {
             </div>
 
             {/* Sign Up Button */}
-            <button className="mt-4 w-full bg-orange-500 text-white font-bold text-lg p-3 rounded-xl hover:bg-orange-600 transition-all shadow-lg shadow-orange-200 active:scale-[0.98]" onClick={submit}>
+            <button 
+            type="button"
+            className="mt-4 w-full bg-orange-500 text-white font-bold text-lg p-3 rounded-xl hover:bg-orange-600 transition-all shadow-lg shadow-orange-200 active:scale-[0.98]" onClick={submit}>
               Join the Pack 🐾
             </button>
           </form>

@@ -1,3 +1,4 @@
+import { Toaster } from 'sonner';
 import ProtectedRoute from "../src/components/ProtectedRoute";
 import PublicRoute from "./components/PublicRoute";
 import Navi from "./components/Navi";
@@ -10,6 +11,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 function App() {
   return (
     <div>
+      <Toaster richColors position="top-center" closeButton />
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Navigate to="/login" replace />} />
