@@ -40,7 +40,7 @@ function Login() {
       }, 3000)
     } catch (error) {
       console.log(error);
-      setError(err.response?.data?.message || "Login failed")
+      setError(error.response?.data?.message || "Login failed")
     } finally {
       setLoading(false)
     }
