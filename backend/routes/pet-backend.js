@@ -222,14 +222,14 @@ route.post("/test", check, async(req, res) => {
       // 1. Save/Update preferences in MySQL
         const sql = `
             INSERT INTO user_preferences 
-            (user_id, energy_pref, independence_pref, kids_pref, space_pref, shedding_pref) 
+            (user_id, energy_score, independence_score, kid_friendly_score, space_needed_score, shedding_score) 
             VALUES (?, ?, ?, ?, ?, ?)
             ON DUPLICATE KEY UPDATE 
-            energy_pref = ?, 
-            independence_pref = ?,
-            kids_pref = ?,
-            space_pref = ?,
-            shedding_pref = ?
+            energy_score = ?, 
+            independence_score = ?,
+            kid_friendly_score = ?,
+            space_needed_score = ?,
+            shedding_score = ?
         `;
 
         await pool.query(sql, [
