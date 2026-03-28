@@ -1,7 +1,7 @@
 import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
-import pet from "../backend/routes/pet-backend.js";
+import pet from "./routes/pet-backend.js";
 
 dotenv.config();
 const app = express();
