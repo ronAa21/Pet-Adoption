@@ -259,12 +259,12 @@ route.post("/test", check, async(req, res) => {
 
 // displays the best match pet for you
 route.get('/recommendations', check, async (req, res) => {
-    const userId = req.user.ownerId; // In production, get this from your decoded JWT token
+    const userId = req.user.ownerId;
 
     try {
         // 1. Get the user's specific preferences from MySQL
         const [prefs] = await pool.query(
-            "SELECT energy_pref, independence_pref, kids_pref, space_pref, shedding_pref FROM user_preferences WHERE user_id = ?",
+            "SELECT energy_score, independence_score, kid_friendly_score, space_needed_score, shedding_score FROM user_preferences WHERE user_id = ?",
             [userId]
         );
 
@@ -274,21 +274,30 @@ route.get('/recommendations', check, async (req, res) => {
 
         const user = prefs[0];
 
-        // 2. Call your Python Flask server (Port 5000)
-        const pythonRes = await axios.post('http://localhost:5000/recommend', {
-            energy: user.energy_pref,
-            independence: user.independence_pref,
-            kids: user.kids_pref,
-            space: user.space_pref,
-            shedding: user.shedding_pref
-        });
+        // 2. For now, return all available pets (sorted by ID)
+        // TODO: Integrate Python ML server when deployed
+        const [pets] = await pool.query(
+            'SELECT pets.* FROM pets LEFT JOIN swipes ON pets.id = swipes.pet_id AND swipes.user_id = ? WHERE swipes.pet_id IS NULL AND pets.is_adopted = 0 ORDER BY pets.id',
+            [userId]
+        );
 
-        // 3. Send the sorted pets back to React
+        res.json({ matches: pets });
+
+        /* 
+        // Uncomment when Python ML server is deployed
+        const pythonRes = await axios.post('YOUR_PYTHON_SERVER_URL/recommend', {
+            energy: user.energy_score,
+            independence: user.independence_score,
+            kids: user.kid_friendly_score,
+            space: user.space_needed_score,
+            shedding: user.shedding_score
+        });
         res.json(pythonRes.data);
+        */
 
     } catch (error) {
-        console.error("ML Error:", error.message);
-        res.status(500).json({ message: "The AI is napping. Try again later!" });
+        console.error("Recommendations Error:", error.message);
+        res.status(500).json({ message: "Failed to get recommendations", error: error.message });
     }
 });
 
