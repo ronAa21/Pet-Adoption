@@ -9,7 +9,10 @@ const app = express();
 const PORT = process.env.PORT || 10000;
 
 app.use(cors({
-  origin: "https://pet-adoption-web-t3i8.onrender.com",
+  origin: [
+    'http://localhost:5173',
+    'https://pet-adoption-web-t3i8.onrender.com'
+  ],
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
   credentials: true

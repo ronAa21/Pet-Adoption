@@ -6,9 +6,7 @@ function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const navigate = useNavigate();
-
-  console.log("VITE_API_URL =", import.meta.env.VITE_API_URL);
-
+  
   // loading states
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -19,7 +17,7 @@ function Login() {
     if(!email || !password) {
       toast.error('Login failed', {
         description: "Email and Password cannot be empty",
-      });;
+      });
       return;
     }
 
@@ -36,8 +34,13 @@ function Login() {
       });
 
       setTimeout(() => {
-        navigate("/swipe");
-      }, 3000)
+        if (res.data.isNewUser) {
+          navigate("/test"); // Take the quiz
+        } else {
+          navigate("/swipe"); // Go to main app
+        }
+      }, 1500);
+
     } catch (error) {
       console.log(error);
       setError(error.response?.data?.message || "Login failed")

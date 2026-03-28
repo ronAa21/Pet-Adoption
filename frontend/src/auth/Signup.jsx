@@ -44,10 +44,6 @@ function Signup() {
       </div>
   }
 
-  if(error) {
-    return <p style={{ color: "red" }}>{error}</p>
-  }
-
   return(
     <div>
       <div className="min-h-screen flex items-center justify-center bg-orange-50 p-4">

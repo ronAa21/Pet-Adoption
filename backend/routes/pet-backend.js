@@ -3,6 +3,7 @@ import { pool } from "../db.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
+import axios from "axios";
 
 const route = express.Router();
 dotenv.config();
@@ -77,7 +78,15 @@ route.post("/login", async (req, res) => {
       { expiresIn: "1h" }
     );
 
-    res.json({ token: token});
+    const [pref] = await pool.query(
+      "SELECT user_id FROM user_preferences WHERE user_id = ?", 
+      [owner.id]
+    )
+
+    res.json({ 
+      token: token,
+      isNewUser: pref.length === 0
+    });
   } catch (error) {
     console.error(error);
     res.status(500).send({ message: "Server failed", error: error });
@@ -201,5 +210,86 @@ route.get("/history", check, async (req, res) => {
     res.status(500).send({ message: "Server Failed", error: error });
   }
 })
+
+// for getting the user's answers on quiz - NEW
+route.post("/test", check, async(req, res) => {
+
+  const ownerId = req.user.ownerId;
+  const { energy, independence, kids, space, shedding } = req.body;
+
+    try {
+
+      // 1. Save/Update preferences in MySQL
+        const sql = `
+            INSERT INTO user_preferences 
+            (user_id, energy_pref, independence_pref, kids_pref, space_pref, shedding_pref) 
+            VALUES (?, ?, ?, ?, ?, ?)
+            ON DUPLICATE KEY UPDATE 
+            energy_pref = ?, 
+            independence_pref = ?,
+            kids_pref = ?,
+            space_pref = ?,
+            shedding_pref = ?
+        `;
+
+        await pool.query(sql, [
+          ownerId, energy, independence, kids, space, shedding,
+          energy, independence, kids, space, shedding
+        ]); 
+
+        const mlResponse = await axios.post('http://localhost:5000/recommend', {
+            energy,
+            independence,
+            kids,
+            space,
+            shedding
+        });
+
+        // 3. Return success (with or without ML matches)
+        res.status(200).json({
+            message: "Preferences saved successfully!",
+            // matches: mlResponse.data.matches // Uncomment when ML server is ready
+        });
+
+    } catch (error) {
+        console.error("Error in Quiz Route:", error);
+        res.status(500).json({ message: "Server error", error: error.message }); 
+    }
+})
+
+// displays the best match pet for you
+route.get('/recommendations', check, async (req, res) => {
+    const userId = req.user.ownerId; // In production, get this from your decoded JWT token
+
+    try {
+        // 1. Get the user's specific preferences from MySQL
+        const [prefs] = await pool.query(
+            "SELECT energy_pref, independence_pref, kids_pref, space_pref, shedding_pref FROM user_preferences WHERE user_id = ?",
+            [userId]
+        );
+
+        if (prefs.length === 0) {
+            return res.status(404).json({ message: "No quiz found. Please take the quiz first!" });
+        }
+
+        const user = prefs[0];
+
+        // 2. Call your Python Flask server (Port 5000)
+        const pythonRes = await axios.post('http://localhost:5000/recommend', {
+            energy: user.energy_pref,
+            independence: user.independence_pref,
+            kids: user.kids_pref,
+            space: user.space_pref,
+            shedding: user.shedding_pref
+        });
+
+        // 3. Send the sorted pets back to React
+        res.json(pythonRes.data);
+
+    } catch (error) {
+        console.error("ML Error:", error.message);
+        res.status(500).json({ message: "The AI is napping. Try again later!" });
+    }
+});
 
 export default route;

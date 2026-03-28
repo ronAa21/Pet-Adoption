@@ -3,7 +3,7 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-const poolConfig = process.env.DB_URL ? {
+const poolConfig = process.env.USE_CLOUD_DB === 'true' ? {
       uri: process.env.DB_URL,
       ssl: { rejectUnauthorized: false }, // Required for Aiven cloud connections
       connectionLimit: 5

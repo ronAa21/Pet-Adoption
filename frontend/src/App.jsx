@@ -7,6 +7,7 @@ import History from "./components/HIstory";
 import Signup from "../src/auth/Signup";
 import Login from "./auth/Login";
 import Profile from "./components/Profile";
+import Quiz from "./quiz/Quiz.jsx";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 function App() {
   return (
@@ -32,6 +33,15 @@ function App() {
               </PublicRoute>
              } 
             />
+
+          <Route
+            path="/test"
+            element={
+              <ProtectedRoute>
+                <Quiz/>
+              </ProtectedRoute>
+            }
+          />
 
           <Route
             path="/swipe"

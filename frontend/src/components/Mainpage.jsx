@@ -46,13 +46,26 @@ function Mainpage() {
     fetchPet();
   }, []);
 
-  const fetchPet = () => {
-    api.get("/pet/adopt")
-      .then(res => {
-        setPets(res.data);
-        setLoading(false);
-      })
-      .catch(err => setError(err));
+   const fetchPet = async () => {
+    setLoading(true);
+    try {
+      /**
+       * POGI LOGIC: 
+       * Instead of a generic list, we call the recommendation endpoint.
+       * The backend will:
+       * 1. Get your preferences from MySQL.
+       * 2. Send them to the Python KNN model.
+       * 3. Return pets sorted from closest match to farthest.
+       */
+      const res = await api.get("/pet/recommendations"); 
+      
+      setPets(res.data.matches); // 'matches' is the ordered array from Python
+    } catch (err) {
+      console.error(err);
+      setError("Failed to load your personalized matches.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   if(loading) {

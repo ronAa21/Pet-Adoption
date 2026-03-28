@@ -1,0 +1,95 @@
+from flask import Flask, request, jsonify
+from flask_cors import CORS
+import mysql.connector
+import joblib
+import numpy as np
+
+app = Flask(__name__)
+CORS(app)
+
+# 1. Load the ML Pipeline and the Pet ID Map
+# This includes the Scaler and the NearestNeighbors model
+pipeline = joblib.load('pet_society.pkl')
+pet_ids_map = joblib.load('pet-ids.pkl')
+
+
+# 2. Database Connection Function
+def get_db_connection():
+    return mysql.connector.connect(
+        host="localhost",
+        port="3307",
+        user="root",
+        password="Aaronpagente212005",
+        database="pet_society"
+    )
+
+
+@app.route('/recommend', methods=['POST'])
+def recommend():
+    try:
+        data = request.json
+
+        # 3. Extract scores from the Frontend Quiz
+        # Order must match: Energy, Independence, Kids, Space, Shedding
+        user_features = [
+            float(data.get('energy', 5)),
+            float(data.get('independence', 5)),
+            float(data.get('kids', 5)),
+            float(data.get('space', 5)),
+            float(data.get('shedding', 5))
+        ]
+
+        # Debug 1: See what the user sent
+        print(f"--- QUIZ INPUT: {user_features} ---")
+
+        scaled_input = pipeline.named_steps['Scaler'].transform([user_features])
+
+        # Get distances along with indices
+        distances, indices = pipeline.named_steps['model'].kneighbors(
+            scaled_input,
+            n_neighbors=3
+        )
+
+        # Debug 2: See the Distances
+        # Lower distance = Closer match. 0.0 is a perfect 1:1 match.
+        print(f"--- MATCH DISTANCES: {distances[0]} ---")
+        print(f"--- MATCH INDICES: {indices[0]} ---")
+
+        recommended_ids = [int(pet_ids_map[i]) for i in indices[0]]
+
+        # 4. Find the 3 Nearest Neighbors
+        # NearestNeighbors expects a 2D array, so we use [user_features]
+        # distances is how far they are, indices is the position in our original dataframe
+        distances, indices = pipeline.named_steps['model'].kneighbors(
+            pipeline.named_steps['Scaler'].transform([user_features]),
+            n_neighbors=3
+        )
+
+        # 5. Convert indices to actual Pet IDs from our database
+        recommended_ids = [int(pet_ids_map[i]) for i in indices[0]]
+
+        # 6. Fetch full pet details from MySQL for the matched IDs
+        db = get_db_connection()
+        cursor = db.cursor(dictionary=True)
+
+        # Using IN (%s, %s, %s) to get all 3 pets in one query
+        format_strings = ','.join(['%s'] * len(recommended_ids))
+        query = f"SELECT id, name, species, age, description, image_url FROM pets WHERE id IN ({format_strings})"
+
+        cursor.execute(query, tuple(recommended_ids))
+        pets = cursor.fetchall()
+
+        cursor.close()
+        db.close()
+
+        return jsonify({
+            "status": "success",
+            "matches": pets
+        })
+
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+
+if __name__ == "__main__":
+    app.run(port=5000, debug=True)
