@@ -13,30 +13,27 @@ pipeline = joblib.load('pet_society.pkl')
 pet_ids_map = joblib.load('pet-ids.pkl')
 
 
-# 2. Database Connection Function
-import os # Add this at the top
+import os
 
 def get_db_connection():
-    # Use environment variable on Render, fallback to local for dev
-    db_url = os.getenv('DB_URL')
+    # Use environment variables for Render deployment
+    db_host = os.getenv('DB_HOST')
     
-    if db_url:
-        # This parses the mysql://user:pass@host:port/db string automatically
+    if db_host:
+        # Production (Render) - using Aiven cloud database
         return mysql.connector.connect(
-            option_files=None,
-            host=os.getenv('DB_HOST'),
+            host=db_host,
             user=os.getenv('DB_USER'),
             password=os.getenv('DB_PASSWORD'),
             database=os.getenv('DB_NAME'),
-            port=os.getenv('DB_PORT'),
-            ssl_ca=None, # Aiven usually works with basic SSL enabled
-            ssl_disabled=False 
+            port=int(os.getenv('DB_PORT', 3306)),
+            ssl_disabled=False
         )
     else:
-        # Your local settings
+        # Local development
         return mysql.connector.connect(
             host="localhost",
-            port="3307",
+            port=3307,
             user="root",
             password="Aaronpagente212005",
             database="pet_society"
@@ -111,4 +108,5 @@ def recommend():
 
 
 if __name__ == "__main__":
-    app.run(port=5000, debug=True)
+    port = int(os.getenv('PORT', 5000))
+    app.run(host='0.0.0.0', port=port, debug=False)

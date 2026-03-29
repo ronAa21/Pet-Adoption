@@ -1,4 +1,5 @@
 services:
+  # Node.js Backend API
   - type: web
     name: pet-adoption-backend
     runtime: node
@@ -10,3 +11,31 @@ services:
         value: 10000
       - key: NODE_ENV
         value: production
+      - key: USE_CLOUD_DB
+        sync: false
+      - key: DB_URL
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+
+  # Python ML Recommendation Server
+  - type: web
+    name: pet-adoption-ml
+    runtime: python
+    rootDir: ml
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn --bind 0.0.0.0:$PORT server:app
+    envVars:
+      - key: PORT
+        value: 5000
+      - key: DB_HOST
+        sync: false
+      - key: DB_USER
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      - key: DB_NAME
+        sync: false
+      - key: DB_PORT
+        sync: false
+
