@@ -274,9 +274,14 @@ route.get('/recommendations', check, async (req, res) => {
 
         console.log("User preferences found:", prefs.length);
 
+        // If no preferences, return all available pets (user hasn't taken quiz)
         if (prefs.length === 0) {
-            console.log("No preferences found, returning 404");
-            return res.status(404).json({ message: "No quiz found. Please take the quiz first!" });
+            console.log("No preferences found, returning all available pets");
+            const [pets] = await pool.query(
+                'SELECT pets.* FROM pets LEFT JOIN swipes ON pets.id = swipes.pet_id AND swipes.user_id = ? WHERE swipes.pet_id IS NULL AND pets.is_adopted = 0 ORDER BY pets.id LIMIT 20',
+                [userId]
+            );
+            return res.json({ matches: pets, message: "Take the quiz for personalized matches!" });
         }
 
         const user = prefs[0];
@@ -323,8 +328,7 @@ route.get('/recommendations', check, async (req, res) => {
         });
         res.status(500).json({ 
             message: "Failed to get recommendations", 
-            error: error.message,
-            details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+            error: error.message
         });
     }
 });
