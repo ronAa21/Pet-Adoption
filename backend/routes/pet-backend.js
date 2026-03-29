@@ -217,6 +217,8 @@ route.post("/test", check, async(req, res) => {
   const ownerId = req.user.ownerId;
   const { energy, independence, kids, space, shedding } = req.body;
 
+  const ML_SERVER_URL = process.env.ML_SERVER_URL || 'http://localhost:5000';
+
     try {
 
       // 1. Save/Update preferences in MySQL
@@ -237,7 +239,7 @@ route.post("/test", check, async(req, res) => {
           energy, independence, kids, space, shedding
         ]); 
 
-        const mlResponse = await axios.post('http://localhost:5000/recommend', {
+        const mlResponse = await axios.post(`${ML_SERVER_URL}/recommend`, {
             energy,
             independence,
             kids,
