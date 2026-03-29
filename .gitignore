@@ -8,6 +8,9 @@ node_modules/
 build/
 dist/
 
+# ML model files (generated on server)
+ml/*.pkl
+
 # System files (Mac/Windows junk)
 .DS_Store
 Thumbs.db
