@@ -224,14 +224,14 @@ route.post("/test", check, async(req, res) => {
       // 1. Save/Update preferences in MySQL
         const sql = `
             INSERT INTO user_preferences 
-            (user_id, energy_score, independence_score, kid_friendly_score, space_needed_score, shedding_score) 
+            (user_id, energy_pref, independence_pref, kids_pref, space_pref, shedding_pref) 
             VALUES (?, ?, ?, ?, ?, ?)
             ON DUPLICATE KEY UPDATE 
-            energy_score = ?, 
-            independence_score = ?,
-            kid_friendly_score = ?,
-            space_needed_score = ?,
-            shedding_score = ?
+            energy_pref = ?, 
+            independence_pref = ?,
+            kids_pref = ?,
+            space_pref = ?,
+            shedding_pref = ?
         `;
 
         await pool.query(sql, [
@@ -268,7 +268,7 @@ route.get('/recommendations', check, async (req, res) => {
         
         // 1. Get the user's specific preferences from MySQL
         const [prefs] = await pool.query(
-            "SELECT energy_score, independence_score, kid_friendly_score, space_needed_score, shedding_score FROM user_preferences WHERE user_id = ?",
+            "SELECT energy_pref, independence_pref, kids_pref, space_pref, shedding_pref FROM user_preferences WHERE user_id = ?",
             [userId]
         );
 
@@ -301,11 +301,11 @@ route.get('/recommendations', check, async (req, res) => {
             console.log("Trying ML server at:", mlServerUrl);
             
             const pythonRes = await axios.post(mlServerUrl, {
-                energy: user.energy_score,
-                independence: user.independence_score,
-                kids: user.kid_friendly_score,
-                space: user.space_needed_score,
-                shedding: user.shedding_score
+                energy: user.energy_pref,
+                independence: user.independence_pref,
+                kids: user.kids_pref,
+                space: user.space_pref,
+                shedding: user.shedding_pref
             }, { timeout: 5000 });
             
             console.log("ML recommendations received");
