@@ -3,17 +3,19 @@ from flask_cors import CORS
 import mysql.connector
 import joblib
 import numpy as np
+import os
 
 app = Flask(__name__)
 CORS(app)
 
-# 1. Load the ML Pipeline and the Pet ID Map
-# This includes the Scaler and the NearestNeighbors model
+# Initialize models on startup
+from init_models import init_models
+init_models()
+
+# 1. Load the ML Pipeline and the Pet ID Map (after init_models generates them)
 pipeline = joblib.load('pet_society.pkl')
 pet_ids_map = joblib.load('pet-ids.pkl')
 
-
-import os
 
 def get_db_connection():
     # Use environment variables for Render deployment
@@ -45,14 +47,12 @@ def recommend():
     try:
         data = request.json
 
-        # 3. Extract scores from the Frontend Quiz
-        # Order must match: Energy, Independence, Kids, Space, Shedding
+        # Order must match: Energy, Independence, Kids, Space (only 4 features)
         user_features = [
             float(data.get('energy', 5)),
             float(data.get('independence', 5)),
             float(data.get('kids', 5)),
-            float(data.get('space', 5)),
-            float(data.get('shedding', 5))
+            float(data.get('space', 5))
         ]
 
         # Debug 1: See what the user sent
