@@ -264,21 +264,36 @@ route.get('/recommendations', check, async (req, res) => {
     const userId = req.user.ownerId;
 
     try {
+        console.log("Getting recommendations for user:", userId);
+        
         // 1. Get the user's specific preferences from MySQL
         const [prefs] = await pool.query(
             "SELECT energy_score, independence_score, kid_friendly_score, space_needed_score, shedding_score FROM user_preferences WHERE user_id = ?",
             [userId]
         );
 
+        console.log("User preferences found:", prefs.length);
+
         if (prefs.length === 0) {
+            console.log("No preferences found, returning 404");
             return res.status(404).json({ message: "No quiz found. Please take the quiz first!" });
         }
 
         const user = prefs[0];
+        console.log("User preferences:", user);
 
-        // 2. Try to get ML recommendations, fallback to simple query if ML fails
+        // 2. Get all available pets (not swiped by this user)
+        const [pets] = await pool.query(
+            'SELECT pets.* FROM pets LEFT JOIN swipes ON pets.id = swipes.pet_id AND swipes.user_id = ? WHERE swipes.pet_id IS NULL AND pets.is_adopted = 0 ORDER BY pets.id',
+            [userId]
+        );
+
+        console.log("Found", pets.length, "available pets");
+
+        // 3. Try ML recommendations if server is available
         try {
             const mlServerUrl = process.env.ML_SERVER_URL || 'https://pet-adoption-ml.onrender.com/recommend';
+            console.log("Trying ML server at:", mlServerUrl);
             
             const pythonRes = await axios.post(mlServerUrl, {
                 energy: user.energy_score,
@@ -286,21 +301,17 @@ route.get('/recommendations', check, async (req, res) => {
                 kids: user.kid_friendly_score,
                 space: user.space_needed_score,
                 shedding: user.shedding_score
-            });
+            }, { timeout: 5000 });
             
+            console.log("ML recommendations received");
             return res.json(pythonRes.data);
         } catch (mlError) {
             console.error("ML Server Error:", mlError.message);
-            console.log("Falling back to simple pet query...");
-            
-            // Fallback: Return all available pets
-            const [pets] = await pool.query(
-                'SELECT pets.* FROM pets LEFT JOIN swipes ON pets.id = swipes.pet_id AND swipes.user_id = ? WHERE swipes.pet_id IS NULL AND pets.is_adopted = 0 ORDER BY pets.id',
-                [userId]
-            );
-            
-            return res.json({ matches: pets });
+            console.log("Using fallback: returning all available pets");
         }
+        
+        // Fallback: Return all available pets
+        return res.json({ matches: pets });
 
     } catch (error) {
         console.error("Recommendations Error:", error);
