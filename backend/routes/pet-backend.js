@@ -276,30 +276,45 @@ route.get('/recommendations', check, async (req, res) => {
 
         const user = prefs[0];
 
-        // 2. For now, return all available pets (sorted by ID)
-        // TODO: Integrate Python ML server when deployed
-        const [pets] = await pool.query(
-            'SELECT pets.* FROM pets LEFT JOIN swipes ON pets.id = swipes.pet_id AND swipes.user_id = ? WHERE swipes.pet_id IS NULL AND pets.is_adopted = 0 ORDER BY pets.id',
-            [userId]
-        );
-
-        res.json({ matches: pets });
-
-        /* 
-        // Uncomment when Python ML server is deployed
-        const pythonRes = await axios.post('YOUR_PYTHON_SERVER_URL/recommend', {
-            energy: user.energy_score,
-            independence: user.independence_score,
-            kids: user.kid_friendly_score,
-            space: user.space_needed_score,
-            shedding: user.shedding_score
-        });
-        res.json(pythonRes.data);
-        */
+        // 2. Try to get ML recommendations, fallback to simple query if ML fails
+        try {
+            const mlServerUrl = process.env.ML_SERVER_URL || 'https://pet-adoption-ml.onrender.com/recommend';
+            
+            const pythonRes = await axios.post(mlServerUrl, {
+                energy: user.energy_score,
+                independence: user.independence_score,
+                kids: user.kid_friendly_score,
+                space: user.space_needed_score,
+                shedding: user.shedding_score
+            });
+            
+            return res.json(pythonRes.data);
+        } catch (mlError) {
+            console.error("ML Server Error:", mlError.message);
+            console.log("Falling back to simple pet query...");
+            
+            // Fallback: Return all available pets
+            const [pets] = await pool.query(
+                'SELECT pets.* FROM pets LEFT JOIN swipes ON pets.id = swipes.pet_id AND swipes.user_id = ? WHERE swipes.pet_id IS NULL AND pets.is_adopted = 0 ORDER BY pets.id',
+                [userId]
+            );
+            
+            return res.json({ matches: pets });
+        }
 
     } catch (error) {
-        console.error("Recommendations Error:", error.message);
-        res.status(500).json({ message: "Failed to get recommendations", error: error.message });
+        console.error("Recommendations Error:", error);
+        console.error("Error details:", {
+            message: error.message,
+            code: error.code,
+            sqlMessage: error.sqlMessage,
+            stack: error.stack
+        });
+        res.status(500).json({ 
+            message: "Failed to get recommendations", 
+            error: error.message,
+            details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+        });
     }
 });
 
