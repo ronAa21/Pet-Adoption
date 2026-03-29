@@ -83,9 +83,12 @@ route.post("/login", async (req, res) => {
       [owner.id]
     )
 
+    const isNewUser = pref.length === 0;
+    console.log(`User ${owner.id} login - isNewUser: ${isNewUser}, preferences found: ${pref.length}`);
+
     res.json({ 
       token: token,
-      isNewUser: pref.length === 0
+      isNewUser: isNewUser
     });
   } catch (error) {
     console.error(error);
