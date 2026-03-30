@@ -220,9 +220,9 @@ route.post("/test", check, async(req, res) => {
   const ownerId = req.user.ownerId;
   const { energy, independence, kids, space, shedding } = req.body;
 
-  const ML_SERVER_URL = process.env.ML_SERVER_URL || 'http://localhost:5000';
-
     try {
+        console.log("Saving quiz preferences for user:", ownerId);
+        console.log("Preferences:", { energy, independence, kids, space, shedding });
 
       // 1. Save/Update preferences in MySQL
         const sql = `
@@ -242,22 +242,20 @@ route.post("/test", check, async(req, res) => {
           energy, independence, kids, space, shedding
         ]); 
 
-        const mlResponse = await axios.post(`${ML_SERVER_URL}/recommend`, {
-            energy,
-            independence,
-            kids,
-            space,
-            shedding
-        });
+        console.log("Preferences saved successfully");
 
-        // 3. Return success (with or without ML matches)
+        // 2. Return success immediately (ML is optional)
         res.status(200).json({
-            message: "Preferences saved successfully!",
-            // matches: mlResponse.data.matches // Uncomment when ML server is ready
+            message: "Preferences saved successfully!"
         });
 
     } catch (error) {
         console.error("Error in Quiz Route:", error);
+        console.error("Error details:", {
+            message: error.message,
+            code: error.code,
+            sqlMessage: error.sqlMessage
+        });
         res.status(500).json({ message: "Server error", error: error.message }); 
     }
 })
